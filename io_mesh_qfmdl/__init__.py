@@ -49,6 +49,12 @@ from bpy.props import BoolProperty, FloatProperty, StringProperty, EnumProperty
 from bpy.props import FloatVectorProperty, PointerProperty
 from bpy_extras.io_utils import ExportHelper, ImportHelper, path_reference_mode, axis_conversion
 
+PALETTE=(
+    ('PAL_QUAKE', "Quake", "Quake palette"),
+    ('PAL_HEXEN2', "Hexen 2", "Hexen 2 palette"),
+    #('PAL_CUSTOM', "Custom", "Custom palette from file"),
+)
+
 SYNCTYPE=(
     ('ST_SYNC', "Syncronized", "Automatic animations are all together"),
     ('ST_RAND', "Random", "Automatic animations have random offsets"),
@@ -66,6 +72,10 @@ EFFECTS=(
 )
 
 class QFMDLSettings(bpy.types.PropertyGroup):
+    palette = EnumProperty(
+        items=PALETTE,
+        name="Palette",
+        description="Palette")
     eyeposition = FloatVectorProperty(
         name="Eye Position",
         description="View possion relative to object origin")
@@ -109,9 +119,15 @@ class ImportMDL6(bpy.types.Operator, ImportHelper):
     '''Load a Quake MDL (v6) File'''
     bl_idname = "import_mesh.quake_mdl_v6"
     bl_label = "Import MDL"
+    bl_options = {'PRESET'}
 
     filename_ext = ".mdl"
     filter_glob = StringProperty(default="*.mdl", options={'HIDDEN'})
+
+    palette = EnumProperty(
+        items=PALETTE,
+        name="Palette",
+        description="Palette")
 
     def execute(self, context):
         from . import import_mdl
@@ -123,14 +139,19 @@ class ExportMDL6(bpy.types.Operator, ExportHelper):
 
     bl_idname = "export_mesh.quake_mdl_v6"
     bl_label = "Export MDL"
-    bl_options = {'PRESET'};
+    bl_options = {'PRESET'}
 
     filename_ext = ".mdl"
     filter_glob = StringProperty(default="*.mdl", options={'HIDDEN'})
 
+    palette = EnumProperty(
+        items=PALETTE,
+        name="Palette",
+        description="Palette")
     eyeposition = FloatVectorProperty(
         name="Eye Position",
         description="View possion relative to object origin")
+        #default = bpy.context.active_object.qfmdl.eyeposition)
     synctype = EnumProperty(
         items=SYNCTYPE,
         name="Sync Type",
@@ -161,6 +182,12 @@ class ExportMDL6(bpy.types.Operator, ExportHelper):
         keywords = self.as_keywords (ignore=("check_existing", "filter_glob"))
         return export_mdl.export_mdl(self, context, **keywords)
 
+    '''
+    def invoke(self, context, event):
+        self.eyeposition = bpy.context.active_object.qfmdl.eyeposition
+        return {'FINISHED'}
+    '''
+
 class OBJECT_PT_MDLPanel(bpy.types.Panel):
     bl_label = "MDL Properties"
     bl_space_type = 'PROPERTIES'
@@ -181,6 +208,7 @@ class OBJECT_PT_MDLPanel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         obj = context.active_object
+        layout.prop(obj.qfmdl, "palette")
         layout.prop(obj.qfmdl, "eyeposition")
         layout.prop(obj.qfmdl, "synctype")
         layout.prop(obj.qfmdl, "rotate")

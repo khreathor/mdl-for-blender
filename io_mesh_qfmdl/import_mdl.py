@@ -23,7 +23,8 @@ import bpy
 from bpy_extras.object_utils import object_data_add
 from mathutils import Vector,Matrix
 
-from .quakepal import palette
+from .quakepal import quakepal
+from .hexen2pal import hexen2pal
 from .mdl import MDL
 from .qfplist import pldata
 
@@ -71,6 +72,10 @@ def make_faces(mdl):
 
 def load_skins(mdl):
     def load_skin(skin, name):
+        if mdl.palette == 0:
+            pal = quakepal
+        else:
+            pal = hexen2pal
         skin.name = name
         img = bpy.data.images.new(name, mdl.skinwidth, mdl.skinheight)
         mdl.images.append(img)
@@ -78,7 +83,7 @@ def load_skins(mdl):
         d = skin.pixels
         for j in range(mdl.skinheight):
             for k in range(mdl.skinwidth):
-                c = palette[d[j * mdl.skinwidth + k]]
+                c = pal[d[j * mdl.skinwidth + k]]
                 # quake textures are top to bottom, but blender images
                 # are bottom to top
                 l = ((mdl.skinheight - 1 - j) * mdl.skinwidth + k) * 4
@@ -393,7 +398,7 @@ def set_properties(mdl):
     #mdl.obj.qfmdl.script = mdl.text.name #FIXME really want the text object
     mdl.obj.qfmdl.md16 = (mdl.ident == "MD16")
 
-def import_mdl(operator, context, filepath, **opts):
+def import_mdl(operator, context, filepath, palette = 'PAL_QUAKE'):
     bpy.context.preferences.edit.use_global_undo = False
 
     for obj in bpy.context.scene.collection.objects:
@@ -413,6 +418,7 @@ def import_mdl(operator, context, filepath, **opts):
     bpy.context.scene.collection.objects.link(mdl.obj)
     mdl.obj.select_set(True)
     bpy.context.view_layer.objects.active = mdl.obj
+    mdl.palette = MDL.PALETTE[palette]
     setup_skins(mdl, uvs)
 
     bpy.context.scene.frame_start = 1

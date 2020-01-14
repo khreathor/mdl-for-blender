@@ -38,6 +38,8 @@ class MDL:
              'EF_GIB':EF_GIB, 'EF_TRACER':EF_TRACER, 'EF_ZOMGIB':EF_ZOMGIB,
              'EF_TRACER2':EF_TRACER2, 'EF_TRACER3':EF_TRACER3}
 
+    PALETTE = {'PAL_QUAKE': 0, 'PAL_HEXEN2': 1}
+
     class Skin:
         def __init__(self):
             self.name = ''
@@ -311,6 +313,7 @@ class MDL:
         self.scale = (1.0, 1.0, 1.0)        #FIXME
         self.scale_origin = (0.0, 0.0, 0.0) #FIXME
         self.boundingradius = 1.0           #FIXME
+        self.palette = 0
         self.eyeposition = (0.0, 0.0, 0.0)  #FIXME
         self.synctype = MDL.ST_SYNC
         self.flags = 0          #FIXME config

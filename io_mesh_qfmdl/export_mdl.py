@@ -24,7 +24,8 @@ from bpy_extras.object_utils import object_data_add
 from mathutils import Vector,Matrix
 
 from .qfplist import pldata, PListError
-from .quakepal import palette
+from .quakepal import quakepal
+from .hexen2pal import hexen2pal
 from .quakenorm import map_normal
 from .mdl import MDL
 from .__init__ import SYNCTYPE, EFFECTS
@@ -50,7 +51,11 @@ def check_faces(mesh):
     mesh.update()
     return True
 
-def convert_image(image):
+def convert_image(image, palette):
+    if(palette == 0):
+        pal = quakepal
+    else:
+        pal = hexen2pal
     size = image.size
     skin = MDL.Skin()
     skin.type = 0
@@ -67,7 +72,7 @@ def convert_image(image):
             rgb = tuple(map(lambda x: int(x * 255 + 0.5), rgb))
             if rgb not in cache:
                 best = (3*256*256, -1)
-                for i, p in enumerate(palette):
+                for i, p in enumerate(pal):
                     if i > 255:     # should never happen
                         break
                     r = 0
@@ -112,7 +117,7 @@ def make_skin(operator, mdl, mesh):
                     if node.type == "TEX_IMAGE":
                         image = node.image
                         mdl.skinwidth, mdl.skinheight = image.size
-                        skin = convert_image(image)
+                        skin = convert_image(image,mdl.palette)
                         skingroup.skins.append(skin)
                         skingroup.times.append(0.1)                 # hardcoded at the moment
                 mdl.skins.append(skingroup)
@@ -121,7 +126,7 @@ def make_skin(operator, mdl, mesh):
                     if node.type == "TEX_IMAGE":
                         image = node.image
                         mdl.skinwidth, mdl.skinheight = image.size
-                        skin = convert_image(image)
+                        skin = convert_image(image,mdl.palette)
                         mdl.skins.append(skin)
             else:
                 mdl.skins.append(skin)                              # add empty skin - no texture nodes
@@ -232,12 +237,14 @@ def calc_average_area(mdl):
 def get_properties(
             operator,
             mdl,
+            palette,
             eyeposition,
             synctype,
             rotate,
             effects,
             xform,
             md16):
+    mdl.palette = MDL.PALETTE[palette]
     mdl.eyeposition = eyeposition
     mdl.synctype = MDL.SYNCTYPE[synctype]
     mdl.flags = ((rotate and MDL.EF_ROTATE or 0)
@@ -245,10 +252,12 @@ def get_properties(
     if md16:
         mdl.ident = "MD16"
 
-    #tomporarily disabled
-    #script = obj.qfmdl.script
     script = None
     mdl.script = None
+
+    '''
+    #tomporarily disabled
+    #script = obj.qfmdl.script
     if script:
         try:
             script = bpy.data.texts[script].as_string()
@@ -262,6 +271,7 @@ def get_properties(
         except PListError as err:
             operator.report({'ERROR'}, "Script error: %s." % err)
             return False
+    '''
     return True
 
 def process_skin(mdl, skin, ingroup=False):
@@ -293,7 +303,7 @@ def process_skin(mdl, skin, ingroup=False):
                                     int(image.size[0]), int(image.size[1])))
         else:
             mdl.skinwidth, mdl.skinheight = image.size
-        sk = convert_image(image)
+        sk = convert_image(image, mdl.palette)
         return sk
 
 def process_frame(mdl, scene, frame, vertmap, ingroup = False,
@@ -335,6 +345,7 @@ def export_mdl(
     operator,
     context,
     filepath = "",
+    palette = 'PAL_QUAKE',
     eyeposition = (0.0, 0.0, 0.0),
     synctype = SYNCTYPE[1],
     rotate = False,
@@ -357,6 +368,7 @@ def export_mdl(
     if not get_properties(
             operator,
             mdl,
+            palette,
             eyeposition,
             synctype,
             rotate,
