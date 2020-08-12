@@ -24,7 +24,7 @@
 bl_info = {
     "name": "Quake MDL format",
     "author": "Bill Currie, Aleksander Marhall",
-    "version": (0, 7, 0),
+    "version": (0, 7, 2),
     "blender": (2, 80, 0),
     "api": 35622,
     "location": "File > Import-Export",
