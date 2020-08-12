@@ -57,7 +57,7 @@ def make_faces(mdl):
                 s += mdl.skinwidth / 2
             # quake textures are top to bottom, but blender images
             # are bottom to top
-            sts.append((s * 1.0 / mdl.skinwidth, 1 - t * 1.0 / mdl.skinheight))
+            sts.append(((s + 0.5) / mdl.skinwidth, 1 - (t + 0.5) / mdl.skinheight))
         # blender's and quake's vertex order seem to be opposed
         tv.reverse()
         sts.reverse()
