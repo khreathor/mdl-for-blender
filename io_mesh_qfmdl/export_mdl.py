@@ -146,7 +146,7 @@ def make_skin(operator, mdl, mesh):
     mdl.skins.append(skin)
     '''
 
-def build_tris(mesh):
+def build_tris(meshes):
     # mdl files have a 1:1 relationship between stverts and 3d verts.
     # a bit sucky, but it does allow faces to take less memory
     #
@@ -156,30 +156,34 @@ def build_tris(mesh):
     # the layout. However, there seems to be nothing in the mdl format
     # preventing the use of duplicate 3d vertices to allow complete freedom
     # of the UV layout.
-    uvfaces = mesh.uv_layers.active.data
+
     stverts = []
     tris = []
-    vertmap = []    # map mdl vert num to blender vert num (for 3d verts)
+    vertmap = list()    # map mdl vert num to blender vert num (for 3d verts)
     vuvdict = {}
-    for face in mesh.polygons:
-        fv = list(face.vertices)
-        uv = uvfaces[face.loop_start:face.loop_start + face.loop_total]
-        uv = list(map(lambda a: a.uv, uv))
-        face_tris = []
-        for i in range(1, len(fv) - 1):
-            # blender's and quake's vertex order are opposed
-            face_tris.append([(fv[0], tuple(uv[0])),
-                              (fv[i + 1], tuple(uv[i + 1])),
-                              (fv[i], tuple(uv[i]))])
-        for ft in face_tris:
-            tv = []
-            for vuv in ft:
-                if vuv not in vuvdict:
-                    vuvdict[vuv] = len(stverts)
-                    vertmap.append(vuv[0])
-                    stverts.append(vuv[1])
-                tv.append(vuvdict[vuv])
-            tris.append(MDL.Tri(tv))
+
+    for m in range(len(meshes)):
+        uvfaces = meshes[m].uv_layers.active.data
+        vertmap.append([])
+        for face in meshes[m].polygons:
+            fv = list(face.vertices)
+            uv = uvfaces[face.loop_start:face.loop_start + face.loop_total]
+            uv = list(map(lambda a: a.uv, uv))
+            face_tris = []
+            for i in range(1, len(fv) - 1):
+                # blender's and quake's vertex order are opposed
+                face_tris.append([(fv[0], tuple(uv[0])),
+                                  (fv[i + 1], tuple(uv[i + 1])),
+                                  (fv[i], tuple(uv[i]))])
+            for ft in face_tris:
+                tv = []
+                for vuv in ft:
+                    if vuv not in vuvdict:
+                        vuvdict[vuv] = len(stverts)
+                        vertmap[m].append(vuv[0])
+                        stverts.append(vuv[1])
+                    tv.append(vuvdict[vuv])
+                tris.append(MDL.Tri(tv))
     return tris, stverts, vertmap
 
 def convert_stverts(mdl, stverts):
@@ -194,14 +198,14 @@ def convert_stverts(mdl, stverts):
         t = ((t % mdl.skinheight) + mdl.skinheight) % mdl.skinheight
         stverts[i] = MDL.STVert((s, t))
 
-def make_frame(mesh, vertmap, idx):
-    frame = MDL.Frame()
-    frame.name = "frame" + str(idx)
+def make_frame(frame, mesh, vertmap):
+    #frame = MDL.Frame()
+    #frame.name = "frame" + str(idx)
 
-    if bpy.context.object.data.shape_keys:
-        shape_keys_amount = len(bpy.context.object.data.shape_keys.key_blocks)
-        if shape_keys_amount > idx:
-            frame.name = bpy.context.object.data.shape_keys.key_blocks[idx].name
+    #if bpy.context.object.data.shape_keys:
+    #    shape_keys_amount = len(bpy.context.object.data.shape_keys.key_blocks)
+    #    if shape_keys_amount > idx:
+    #        frame.name = bpy.context.object.data.shape_keys.key_blocks[idx].name
 
     for v in vertmap:
         mv = mesh.vertices[v]
@@ -341,6 +345,14 @@ def process_frame(mdl, scene, frame, vertmap, ingroup = False,
     fr.name = name
     return fr
 
+def name_frame(frame_number):
+    if bpy.context.object.data.shape_keys:
+        shape_keys_amount = len(bpy.context.object.data.shape_keys.key_blocks)
+        if shape_keys_amount > frame_number:
+            return bpy.context.object.data.shape_keys.key_blocks[frame_number].name
+    else:
+        return "frame" + str(frame_number)
+
 def export_mdl(
     operator,
     context,
@@ -354,50 +366,53 @@ def export_mdl(
     md16 = False
     ):
 
-    obj = context.active_object
-    obj.update_from_editmode()
-    depsgraph = context.evaluated_depsgraph_get()
-    ob_eval = obj.evaluated_get(depsgraph)
-    mesh = ob_eval.to_mesh()
-    #if not check_faces(mesh):
-    #    operator.report({'ERROR'},
-    #                    "Mesh has faces with more than 3 vertices.")
-    #    return {'CANCELLED'}
-    mdl = MDL(obj.name)
-    mdl.obj = obj
-    if not get_properties(
-            operator,
-            mdl,
-            palette,
-            eyeposition,
-            synctype,
-            rotate,
-            effects,
-            xform,
-            md16):
-                return {'CANCELLED'}
+    print("Start MDL Export...\n")
 
-    mdl.tris, mdl.stverts, vertmap = build_tris(mesh)
-    if mdl.script:
-        if 'skins' in mdl.script:
-            for skin in mdl.script['skins']:
-                mdl.skins.append(process_skin(mdl, skin))
-        if 'frames' in mdl.script:
-            for frame in mdl.script['frames']:
-                mdl.frames.append(process_frame(mdl, context.scene, frame,
-                                                vertmap))
-    if not mdl.skins:
-        make_skin(operator, mdl, mesh)
+    meshes = []
+    objects = context.selected_objects
+    for i in range(len(objects)):
+        print("Object name: " + str(objects[i].name))
+        bpy.ops.object.select_all(action='DESELECT')
+        objects[i].select_set(True)
+        context.view_layer.objects.active = objects[i]
+        objects[i].update_from_editmode()
+        depsgraph = context.evaluated_depsgraph_get()
+        ob_eval = objects[i].evaluated_get(depsgraph)
+        mesh = ob_eval.to_mesh()
+        meshes.append(mesh)
+        if i == 0:
+            mdl = MDL(objects[0].name)
+            mdl.obj = objects[0]
+            if not mdl.skins:
+                make_skin(operator, mdl, mesh)
+        if not get_properties(
+                operator,
+                mdl,
+                palette,
+                eyeposition,
+                synctype,
+                rotate,
+                effects,
+                xform,
+                md16):
+                    return {'CANCELLED'}
+    mdl.tris, mdl.stverts, vertmap = build_tris(meshes)
+
     if not mdl.frames:
         for fno in range(context.scene.frame_start, context.scene.frame_end + 1):
             context.scene.frame_set(fno)
-            obj.update_from_editmode()
-            depsgraph = context.evaluated_depsgraph_get()
-            ob_eval = obj.evaluated_get(depsgraph)
-            mesh = ob_eval.to_mesh()
-            if xform:
-                mesh.transform(mdl.obj.matrix_world)
-            mdl.frames.append(make_frame(mesh, vertmap, fno))
+            frame = MDL.Frame()
+            frame.name = name_frame(fno)
+            for i in range(len(objects)):
+                objects[i].update_from_editmode()
+                depsgraph = context.evaluated_depsgraph_get()
+                ob_eval = objects[i].evaluated_get(depsgraph)
+                mesh = ob_eval.to_mesh()
+                if xform:
+                    mesh.transform(mdl.obj.matrix_world)
+                frame = make_frame(frame, mesh, vertmap[i])
+            mdl.frames.append(frame)
+
     convert_stverts(mdl, mdl.stverts)
     mdl.size = calc_average_area(mdl)
     scale_verts(mdl)
