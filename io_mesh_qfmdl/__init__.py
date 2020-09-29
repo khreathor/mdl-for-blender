@@ -87,6 +87,10 @@ class QFMDLSettings(bpy.types.PropertyGroup):
     rotate = BoolProperty(
         name="Rotate",
         description="Rotate automatically (for pickup items)")
+    alpha = BoolProperty(
+        name="Transparency",
+        description="Enable transparency using color index 255",
+        default=False)
     effects = EnumProperty(
         items=EFFECTS,
         name="Effects",
@@ -160,6 +164,10 @@ class ExportMDL6(bpy.types.Operator, ExportHelper):
     rotate = BoolProperty(
         name="Rotate",
         description="Rotate automatically (for pickup items)",
+        default=False)
+    alpha = BoolProperty(
+        name="Transparency",
+        description="Enable transparency using color index 255",
         default=False)
     effects = EnumProperty(
         items=EFFECTS,

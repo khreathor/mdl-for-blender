@@ -245,6 +245,7 @@ def get_properties(
             eyeposition,
             synctype,
             rotate,
+            alpha,
             effects,
             xform,
             md16):
@@ -252,6 +253,7 @@ def get_properties(
     mdl.eyeposition = eyeposition
     mdl.synctype = MDL.SYNCTYPE[synctype]
     mdl.flags = ((rotate and MDL.EF_ROTATE or 0)
+                 | (alpha and MDL.MF_HOLEY or 0)
                  | MDL.EFFECTS[effects])
     if md16:
         mdl.ident = "MD16"
@@ -361,6 +363,7 @@ def export_mdl(
     eyeposition = (0.0, 0.0, 0.0),
     synctype = SYNCTYPE[1],
     rotate = False,
+    alpha = False,
     effects = EFFECTS[1],
     xform = True,
     md16 = False
@@ -392,6 +395,7 @@ def export_mdl(
                 eyeposition,
                 synctype,
                 rotate,
+                alpha,
                 effects,
                 xform,
                 md16):
