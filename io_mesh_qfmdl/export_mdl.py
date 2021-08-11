@@ -105,31 +105,33 @@ def make_skin(operator, mdl, mesh):
 
     if len(materials) > 0:
         for mat in materials:
-            allTextureNodes = list(filter(lambda node: node.type == "TEX_IMAGE", mat.node_tree.nodes))
-            if len(allTextureNodes) > 1:                            #=== skingroup
-                skingroup = MDL.Skin()
-                skingroup.type = 1
-                skingroup.skins = []
-                skingroup.times = []
-                sortedNodes = list(allTextureNodes)
-                sortedNodes.sort(key=lambda x: x.location[1], reverse=True)
-                for node in sortedNodes:
-                    if node.type == "TEX_IMAGE":
-                        image = node.image
-                        mdl.skinwidth, mdl.skinheight = image.size
-                        skin = convert_image(image,mdl.palette)
-                        skingroup.skins.append(skin)
-                        skingroup.times.append(0.1)                 # hardcoded at the moment
-                mdl.skins.append(skingroup)
-            elif len(allTextureNodes) == 1:                         #=== single skin
-                for node in allTextureNodes:
-                    if node.type == "TEX_IMAGE":
-                        image = node.image
-                        mdl.skinwidth, mdl.skinheight = image.size
-                        skin = convert_image(image,mdl.palette)
-                        mdl.skins.append(skin)
-            else:
-                mdl.skins.append(skin)                              # add empty skin - no texture nodes
+            if mat:
+                if mat.use_nodes:
+                    allTextureNodes = list(filter(lambda node: node.type == "TEX_IMAGE", mat.node_tree.nodes))
+                    if len(allTextureNodes) > 1:                            #=== skingroup
+                        skingroup = MDL.Skin()
+                        skingroup.type = 1
+                        skingroup.skins = []
+                        skingroup.times = []
+                        sortedNodes = list(allTextureNodes)
+                        sortedNodes.sort(key=lambda x: x.location[1], reverse=True)
+                        for node in sortedNodes:
+                            if node.type == "TEX_IMAGE":
+                                image = node.image
+                                mdl.skinwidth, mdl.skinheight = image.size
+                                skin = convert_image(image,mdl.palette)
+                                skingroup.skins.append(skin)
+                                skingroup.times.append(0.1)                 # hardcoded at the moment
+                        mdl.skins.append(skingroup)
+                    elif len(allTextureNodes) == 1:                         #=== single skin
+                        for node in allTextureNodes:
+                            if node.type == "TEX_IMAGE":
+                                image = node.image
+                                mdl.skinwidth, mdl.skinheight = image.size
+                                skin = convert_image(image,mdl.palette)
+                                mdl.skins.append(skin)
+                    else:
+                        mdl.skins.append(skin)                              # add empty skin - no texture nodes
     else:
         mdl.skins.append(skin)                                      # add empty skin - no materials
 
@@ -352,8 +354,8 @@ def name_frame(frame_number):
         shape_keys_amount = len(bpy.context.object.data.shape_keys.key_blocks)
         if shape_keys_amount > frame_number:
             return bpy.context.object.data.shape_keys.key_blocks[frame_number].name
-    else:
-        return "frame" + str(frame_number)
+    #else:
+    return "frame" + str(frame_number)
 
 def export_mdl(
     operator,
@@ -371,35 +373,45 @@ def export_mdl(
 
     print("Start MDL Export...\n")
 
+    firstObj = True
     meshes = []
     objects = context.selected_objects
+    if not objects:
+        bpy.ops.object.select_all(action='SELECT')
+        objects = context.selected_objects
+        if objects:
+            context.view_layer.objects.active = objects[0]
+        else:
+            return {'CANCELLED'}
     for i in range(len(objects)):
         print("Object name: " + str(objects[i].name))
-        bpy.ops.object.select_all(action='DESELECT')
-        objects[i].select_set(True)
-        context.view_layer.objects.active = objects[i]
-        objects[i].update_from_editmode()
-        depsgraph = context.evaluated_depsgraph_get()
-        ob_eval = objects[i].evaluated_get(depsgraph)
-        mesh = ob_eval.to_mesh()
-        meshes.append(mesh)
-        if i == 0:
-            mdl = MDL(objects[0].name)
-            mdl.obj = objects[0]
-            if not mdl.skins:
-                make_skin(operator, mdl, mesh)
-        if not get_properties(
-                operator,
-                mdl,
-                palette,
-                eyeposition,
-                synctype,
-                rotate,
-                alpha,
-                effects,
-                xform,
-                md16):
-                    return {'CANCELLED'}
+        if objects[i].type == 'MESH':
+            bpy.ops.object.select_all(action='DESELECT')
+            objects[i].select_set(True)
+            context.view_layer.objects.active = objects[i]
+            objects[i].update_from_editmode()
+            depsgraph = context.evaluated_depsgraph_get()
+            ob_eval = objects[i].evaluated_get(depsgraph)
+            mesh = ob_eval.to_mesh()
+            meshes.append(mesh)
+            if firstObj == True:
+                mdl = MDL(objects[0].name)
+                mdl.obj = objects[0]
+                firstObj = False
+                if not mdl.skins:
+                    make_skin(operator, mdl, mesh)
+            if not get_properties(
+                    operator,
+                    mdl,
+                    palette,
+                    eyeposition,
+                    synctype,
+                    rotate,
+                    alpha,
+                    effects,
+                    xform,
+                    md16):
+                        return {'CANCELLED'}
     mdl.tris, mdl.stverts, vertmap = build_tris(meshes)
 
     if not mdl.frames:

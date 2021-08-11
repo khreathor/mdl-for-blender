@@ -57,7 +57,7 @@ PALETTE=(
 )
 
 SYNCTYPE=(
-    ('ST_SYNC', "Syncronized", "Automatic animations are all together"),
+    ('ST_SYNC', "Synchronized", "Automatic animations are all together"),
     ('ST_RAND', "Random", "Automatic animations have random offsets"),
 )
 
@@ -196,6 +196,7 @@ class ExportMDL6(bpy.types.Operator, ExportHelper):
         self.eyeposition = bpy.context.active_object.qfmdl.eyeposition
         return {'FINISHED'}
     '''
+
 
 class OBJECT_PT_MDLPanel(bpy.types.Panel):
     bl_label = "MDL Properties"
