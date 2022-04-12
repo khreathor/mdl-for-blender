@@ -24,13 +24,13 @@
 bl_info = {
     "name": "Quake MDL format",
     "author": "Bill Currie, Aleksander Marhall",
-    "version": (0, 7, 2),
+    "version": (0, 7, 3),
     "blender": (2, 80, 0),
     "api": 35622,
     "location": "File > Import-Export",
     "description": "Import-Export Quake MDL (version 6) files. (.mdl)",
     "warning": "still work in progress",
-    "wiki_url": "",
+    "wiki_url": "https://bitbucket.org/khreathor/mdl-for-blender/wiki/Home",
     "tracker_url": "",
 #   "support": 'OFFICIAL',
     "category": "Import-Export"}
