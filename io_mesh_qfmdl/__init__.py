@@ -24,7 +24,7 @@
 bl_info = {
     "name": "Quake MDL format",
     "author": "Bill Currie, Aleksander Marhall",
-    "version": (0, 7, 3),
+    "version": (0, 7, 4),
     "blender": (2, 80, 0),
     "api": 35622,
     "location": "File > Import-Export",
@@ -52,6 +52,7 @@ from bpy_extras.io_utils import ExportHelper, ImportHelper, path_reference_mode,
 
 PALETTE=(
     ('PAL_QUAKE', "Quake", "Quake palette"),
+    ('PAL_QUAKE_NF', "Quake no fullbrights", "Quake no fullbrights palette"),
     ('PAL_HEXEN2', "Hexen 2", "Hexen 2 palette"),
     #('PAL_CUSTOM', "Custom", "Custom palette from file"),
 )

@@ -25,6 +25,7 @@ from mathutils import Vector,Matrix
 
 from .qfplist import pldata, PListError
 from .quakepal import quakepal
+from .quakepal_nf import quakepal_nf
 from .hexen2pal import hexen2pal
 from .quakenorm import map_normal
 from .mdl import MDL
@@ -54,8 +55,11 @@ def check_faces(mesh):
 def convert_image(image, palette):
     if(palette == 0):
         pal = quakepal
+    elif(palette == 1):
+        pal = quakepal_nf
     else:
         pal = hexen2pal
+        
     size = image.size
     skin = MDL.Skin()
     skin.type = 0

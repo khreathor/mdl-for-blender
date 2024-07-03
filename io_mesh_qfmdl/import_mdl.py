@@ -24,6 +24,7 @@ from bpy_extras.object_utils import object_data_add
 from mathutils import Vector,Matrix
 
 from .quakepal import quakepal
+from .quakepal_nf import quakepal_nf
 from .hexen2pal import hexen2pal
 from .mdl import MDL
 from .qfplist import pldata
