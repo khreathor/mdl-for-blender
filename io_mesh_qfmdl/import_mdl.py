@@ -220,10 +220,15 @@ def build_shape_keys(mdl):
     bpy.context.scene.frame_start = 1
 
 def set_keys(act, data):
+    slot = act.slots.new('KEY', act.name)
+    layer = act.layers.new("mdl_anim")
+    strip = layer.strips.new(type='KEYFRAME')
+    ch_bag = strip.channelbag(slot, ensure=True)
+    curves = ch_bag.fcurves
     for d in data:
         key, co = d
         dp = """key_blocks["%s"].value""" % key.name
-        fc = act.fcurves.new(data_path = dp)
+        fc = curves.new(data_path=dp)
         fc.keyframe_points.add(len(co))
         for i in range(len(co)):
             fc.keyframe_points[i].co = co[i]
