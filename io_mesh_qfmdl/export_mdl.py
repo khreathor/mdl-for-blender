@@ -377,6 +377,8 @@ def export_mdl(
 
     print("Start MDL Export...\n")
 
+    bpy.ops.object.mode_set(mode='OBJECT')
+
     firstObj = True
     meshes = []
     objects = context.selected_objects
