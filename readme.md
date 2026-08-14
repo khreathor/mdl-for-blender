@@ -14,5 +14,6 @@ Mdl exporter/importer for Blender 2.8+ (and 2.7x). Originally developed by taniw
 - [Scene Setup](wiki/Scene%20Setup.md)
 - [Materials](wiki/Materials.md)
 - [Animations](wiki/Animations.md)
+- [Example Model](wiki/Example.md)
 - [MDL Knowledge Base](wiki/MDL%20Knowledge%20Base.md)
 
